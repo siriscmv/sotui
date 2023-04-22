@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -31,19 +34,27 @@ func (opts RequestOptions) GetURL() string {
 	return fmt.Sprintf("%s/%s/%s/%s?site=%s&sort=%s&order=%s&filter=%s&access_token=%s&key=%s", baseApiURL, "questions", opts.IDs, "answers", opts.Site, opts.Sort, opts.Order, opts.Filter, GetToken(), key)
 }
 
-func MakeRequest(opts RequestOptions) (*http.Response, error) {
+func MakeRequest(opts RequestOptions) {
 	url := opts.GetURL()
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
+	req, _ := http.NewRequest("GET", url, nil)
 
-	req.Header.Add("Accept-Charset", "utf-8")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
-	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-	req.Header.Set("Host", "api.stackexchange.com")
 	req.Header.Set("User-Agent", "sotui")
 	req.Header.Set("Connection", "keep-alive")
-	return client.Do(req)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	respBytes, _ := ioutil.ReadAll(resp.Body)
+
+	gzipReader, _ := gzip.NewReader(bytes.NewReader(respBytes))
+	decompressedData, _ := ioutil.ReadAll(gzipReader)
+	json := string(decompressedData)
+
+	fmt.Println(json)
 }
+
+//TODO: Create type based on response json and send it back, also handle errors like backoff etc

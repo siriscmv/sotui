@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"fmt"
-	"io"
 	"regexp"
 
 	"github.com/Siris01/sotui/utils"
@@ -41,22 +39,11 @@ func Search(query string, site string, sort string, order string, filter string)
 		filter = "!szz.51ErE5dRYIAadZEuxVMHA5r6Nj7"
 	}
 
-	res, err := utils.MakeRequest(utils.RequestOptions{
+	utils.MakeRequest(utils.RequestOptions{
 		IDs:    ids,
 		Sort:   sort,
 		Order:  order,
 		Site:   site,
 		Filter: filter,
 	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	defer res.Body.Close()
-	bytes, err := io.ReadAll(res.Body)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(bytes))
 }
