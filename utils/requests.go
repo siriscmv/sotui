@@ -49,7 +49,6 @@ func MakeRequest(opts RequestOptions) {
 	defer resp.Body.Close()
 
 	respBytes, _ := ioutil.ReadAll(resp.Body)
-
 	gzipReader, _ := gzip.NewReader(bytes.NewReader(respBytes))
 	decompressedData, _ := ioutil.ReadAll(gzipReader)
 	json := string(decompressedData)
