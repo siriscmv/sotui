@@ -9,8 +9,8 @@ import (
 
 func Search(query string) {
 	res, err := utils.MakeRequest("search", url.Values{
-		"order": {"desc"},
-		"sort": {"votes"},
+		"order":   {"desc"},
+		"sort":    {"votes"},
 		"intitle": {query},
 	}) //TODO: Search google first then get ids and search stackoverflow, stackoverflow search api barely works
 

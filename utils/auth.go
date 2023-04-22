@@ -11,11 +11,11 @@ import (
 )
 
 const (
-    baseAuthURL = "https://stackoverflow.com/oauth/dialog"
-    clientId = "26062"
-	key = "w1BFZmzoMKahE3t5WYlEBA(("
-    scope = "no_expiry"
-    redirectUri = "http://localhost:6789/sotui-callback"
+	baseAuthURL = "https://stackoverflow.com/oauth/dialog"
+	clientId    = "26062"
+	key         = "w1BFZmzoMKahE3t5WYlEBA(("
+	scope       = "no_expiry"
+	redirectUri = "http://localhost:6789/sotui-callback"
 )
 
 var token string
@@ -25,13 +25,15 @@ func GetToken() string {
 		return token
 	}
 
-	dir, err := homedir.Dir(); if err != nil {
+	dir, err := homedir.Dir()
+	if err != nil {
 		panic("Unable to get home directory")
 	}
 
 	filePath := dir + "/.sotui/token"
 
-	access_token, err := ioutil.ReadFile(filePath); if err != nil {
+	access_token, err := ioutil.ReadFile(filePath)
+	if err != nil {
 		return ""
 	} else {
 		token = string(access_token)
@@ -41,17 +43,19 @@ func GetToken() string {
 }
 
 func SetToken(access_token string) {
-	dir, err := homedir.Dir(); if err != nil {
+	dir, err := homedir.Dir()
+	if err != nil {
 		panic("Unable to get home directory")
 	}
 
 	filePath := dir + "/.sotui/token"
 
-	if _, err := os.Stat(filePath); os.IsNotExist(err) { 
-		os.Mkdir(dir + "/.sotui" , 0777)
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		os.Mkdir(dir+"/.sotui", 0777)
 	} //TODO: More restrictive permissions
 
-	err = os.WriteFile(filePath, []byte(access_token), 0777); if err != nil {
+	err = os.WriteFile(filePath, []byte(access_token), 0777)
+	if err != nil {
 		panic(err)
 	}
 	token = access_token
@@ -59,7 +63,7 @@ func SetToken(access_token string) {
 
 func Oauth2() {
 	m := http.NewServeMux()
-    s := http.Server{Addr: ":6789", Handler: m}
+	s := http.Server{Addr: ":6789", Handler: m}
 
 	m.HandleFunc("/sotui-callback", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
@@ -72,7 +76,7 @@ func Oauth2() {
 		`
 		if r.URL.RawQuery == "" {
 			w.Write([]byte(html))
-		} else{
+		} else {
 			token := r.URL.Query().Get("access_token")
 
 			if token == "" {
@@ -85,7 +89,7 @@ func Oauth2() {
 			}
 		}
 
-    })
+	})
 
 	s.ListenAndServe()
 }
