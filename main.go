@@ -1,13 +1,9 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/Siris01/sotui/utils"
+	"github.com/Siris01/sotui/commands"
 )
 
 func main() {
-	fmt.Println("Visit this URL to authenticate: " + utils.GetAuthURL())
-	utils.Oauth2()
-	fmt.Println("Token: " + utils.GetToken())
+	commands.Search("How to exit Vim?", "", "", "", "")
 }
