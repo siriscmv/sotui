@@ -25,36 +25,38 @@ var httpClient = &http.Client{
 	},
 }
 
+type ResponseItem struct {
+	Tags    []string `json:"tags"`
+	Answers []struct {
+		Comments []struct {
+			Score     int `json:"score"`
+			PostID    int `json:"post_id"`
+			CommentID int `json:"comment_id"`
+		} `json:"comments,omitempty"`
+		CommentCount int    `json:"comment_count"`
+		IsAccepted   bool   `json:"is_accepted"`
+		Score        int    `json:"score"`
+		LastEditDate int    `json:"last_edit_date,omitempty"`
+		AnswerID     int    `json:"answer_id"`
+		QuestionID   int    `json:"question_id"`
+		BodyMarkdown string `json:"body_markdown"`
+	} `json:"answers"`
+	ViewCount        int    `json:"view_count"`
+	AcceptedAnswerID int    `json:"accepted_answer_id,omitempty"`
+	AnswerCount      int    `json:"answer_count"`
+	Score            int    `json:"score"`
+	LastEditDate     int    `json:"last_edit_date,omitempty"`
+	QuestionID       int    `json:"question_id"`
+	BodyMarkdown     string `json:"body_markdown"`
+	Link             string `json:"link"`
+	Title            string `json:"title"`
+}
+
 type SEResponse struct {
-	Items []struct {
-		Tags    []string `json:"tags"`
-		Answers []struct {
-			Comments []struct {
-				Score     int `json:"score"`
-				PostID    int `json:"post_id"`
-				CommentID int `json:"comment_id"`
-			} `json:"comments,omitempty"`
-			CommentCount int    `json:"comment_count"`
-			IsAccepted   bool   `json:"is_accepted"`
-			Score        int    `json:"score"`
-			LastEditDate int    `json:"last_edit_date,omitempty"`
-			AnswerID     int    `json:"answer_id"`
-			QuestionID   int    `json:"question_id"`
-			BodyMarkdown string `json:"body_markdown"`
-		} `json:"answers"`
-		ViewCount        int    `json:"view_count"`
-		AcceptedAnswerID int    `json:"accepted_answer_id,omitempty"`
-		AnswerCount      int    `json:"answer_count"`
-		Score            int    `json:"score"`
-		LastEditDate     int    `json:"last_edit_date,omitempty"`
-		QuestionID       int    `json:"question_id"`
-		BodyMarkdown     string `json:"body_markdown"`
-		Link             string `json:"link"`
-		Title            string `json:"title"`
-	} `json:"items"`
-	HasMore        bool `json:"has_more"`
-	QuotaMax       int  `json:"quota_max"`
-	QuotaRemaining int  `json:"quota_remaining"`
+	Items          []ResponseItem `json:"items"`
+	HasMore        bool           `json:"has_more"`
+	QuotaMax       int            `json:"quota_max"`
+	QuotaRemaining int            `json:"quota_remaining"`
 }
 
 func (resp SEResponse) ToRows() []table.Row {

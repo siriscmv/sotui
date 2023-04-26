@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -29,7 +30,7 @@ const (
 	WaitingForInput State = iota
 	WaitingForResponse
 	DisplayingAllQuestions
-	DisplayingQuestion
+	DisplayingQuestionAndAnswers
 	DisplayingAllComments
 	DisplayingHelpScreen
 )
@@ -40,7 +41,7 @@ const (
 	Error
 )
 
-type model struct {
+type Model struct {
 	table    table.Model
 	textarea textarea.Model
 	viewport viewport.Model
@@ -64,7 +65,7 @@ var (
 	FadedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#999999"))
 )
 
-func initialModel() model {
+func initialModel() Model {
 	ta := textarea.New()
 	ta.Placeholder = "What is your question?"
 	ta.Focus()
@@ -90,7 +91,7 @@ func initialModel() model {
 	tb.SetHeight(10)
 	tb.SetWidth(30)
 
-	m := model{
+	m := Model{
 		table:    tb,
 		textarea: ta,
 		viewport: vp,
@@ -105,7 +106,7 @@ func initialModel() model {
 	return m
 }
 
-func (m model) SetTableHeaders() {
+func (m *Model) SetTableHeaders() {
 	columns := []table.Column{
 		{
 			Title: "Score",
@@ -128,11 +129,11 @@ func (m model) SetTableHeaders() {
 	m.table.SetColumns(columns)
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return textarea.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		tiCmd tea.Cmd
 		taCmd tea.Cmd
@@ -147,11 +148,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.table.SetHeight(msg.Height - 10)
+		m.table.SetHeight(msg.Height - 4)
 		m.table.SetWidth(msg.Width - 6)
 		m.SetTableHeaders()
 
-		m.viewport.Height = msg.Height - 10
+		m.viewport.Height = msg.Height - 4
 		m.viewport.Width = msg.Width - 6
 
 		m.textarea.SetWidth(msg.Width - 6)
@@ -168,6 +169,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
+		case tea.KeyBackspace:
+			//TODO: Keep going back state by state
 		case tea.KeyEnter:
 			if m.state == WaitingForInput {
 				go func() {
@@ -178,7 +181,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					tui.Send(resp)
 				}()
 				m.state = WaitingForResponse
-				return m, tea.Batch(tiCmd, taCmd, vpCmd, spinner.Tick)
+				return m, tea.Batch(vpCmd, spinner.Tick)
+			} else if m.state == DisplayingAllQuestions {
+				m.state = DisplayingQuestionAndAnswers
+				m.table.Blur()
+
+				row, found := GetSelectedRow(m, m.table.SelectedRow())
+
+				if !found {
+					return m, nil
+				}
+
+				question := fmt.Sprintf("## %s\n\n%s", row.Title, row.BodyMarkdown)
+
+				answers := "----------------\n\n## Answers\n\n"
+
+				for _, answer := range row.Answers { //TODO: Filter answers that belong to chosen question id (?)
+					answers += fmt.Sprintf("### %d\n\n%s\n\n", answer.AnswerID, answer.BodyMarkdown)
+				}
+
+				m.viewport.SetContent(question + answers)
+				return m, nil
 			}
 		}
 
@@ -226,7 +249,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(tiCmd, taCmd, vpCmd, spCmd)
 }
 
-func (m model) View() string {
+func (m Model) View() string {
 	if m.err != nil {
 		return m.err.Error()
 	} else if m.state == WaitingForInput {
@@ -235,7 +258,7 @@ func (m model) View() string {
 		return m.spinner.View()
 	} else if m.state == DisplayingAllQuestions {
 		return m.table.View()
-	} else if m.state == DisplayingQuestion || m.state == DisplayingAllComments || m.state == DisplayingHelpScreen {
+	} else if m.state == DisplayingQuestionAndAnswers || m.state == DisplayingAllComments || m.state == DisplayingHelpScreen {
 		return m.viewport.View()
 	}
 
