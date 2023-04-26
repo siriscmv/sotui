@@ -1,9 +1,8 @@
-package commands
+package main
 
 import (
 	"regexp"
 
-	"github.com/Siris01/sotui/utils"
 	googlesearch "github.com/rocketlaunchr/google-search"
 )
 
@@ -39,7 +38,7 @@ func Search(query string, site string, sort string, order string, filter string)
 		filter = "!szz.51ErE5dRYIAadZEuxVMHA5r6Nj7"
 	}
 
-	utils.MakeRequest(utils.RequestOptions{
+	MakeRequest(RequestOptions{
 		IDs:    ids,
 		Sort:   sort,
 		Order:  order,

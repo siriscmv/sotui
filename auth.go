@@ -1,4 +1,4 @@
-package utils
+package main
 
 import (
 	"context"
@@ -69,10 +69,12 @@ func Oauth2() {
 		w.Header().Set("Content-Type", "text/html")
 
 		html := `
+		<div>
+		<p>Authenticating... , make sure javascript is enabled</p>
 		<script>
-		document.write("Authenticating... , make sure javascript is enabled")
 		window.location.href = window.location.href.replace("#", "?")
 		</script>
+		</div>
 		`
 		if r.URL.RawQuery == "" {
 			w.Write([]byte(html))
