@@ -22,7 +22,7 @@ type (
 	errMsg  error
 	State   int
 	LogType int
-	logMsg Log
+	logMsg  Log
 )
 
 const (
@@ -52,16 +52,16 @@ type model struct {
 }
 
 var (
-	WhiteTextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ffffff")) 
-	BaseLogStyle = WhiteTextStyle.Copy().AlignVertical(lipgloss.Center).AlignHorizontal(lipgloss.Center)
-	InfoLogStyle = BaseLogStyle.Copy().
+	WhiteTextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ffffff"))
+	BaseLogStyle   = WhiteTextStyle.Copy().AlignVertical(lipgloss.Center).AlignHorizontal(lipgloss.Center)
+	InfoLogStyle   = BaseLogStyle.Copy().
 			Background(lipgloss.Color("#a6da9580"))
 	WarningLogStyle = BaseLogStyle.Copy().
-	Background(lipgloss.Color("#eed49f80"))
+			Background(lipgloss.Color("#eed49f80"))
 	ErrorLogStyle = BaseLogStyle.Copy().
-	Background(lipgloss.Color("#ed879680"))
-	AccentStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#c6a0f6"))
-	FadedStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#999999"))
+			Background(lipgloss.Color("#ed879680"))
+	AccentStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#c6a0f6"))
+	FadedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#999999"))
 )
 
 func initialModel() model {
@@ -109,22 +109,22 @@ func (m model) SetTableHeaders() {
 	columns := []table.Column{
 		{
 			Title: "Score",
-			Width: int(0.1 *  float32(m.table.Width())),
+			Width: int(0.1 * float32(m.table.Width())),
 		},
 		{
 			Title: "Title",
-			Width: int(0.6 *  float32(m.table.Width())),
+			Width: int(0.6 * float32(m.table.Width())),
 		},
 		{
 			Title: "Views",
-			Width: int(0.1 *  float32(m.table.Width())),
+			Width: int(0.1 * float32(m.table.Width())),
 		},
 		{
 			Title: "Last Activity",
-			Width: int(0.2 *  float32(m.table.Width())),
+			Width: int(0.2 * float32(m.table.Width())),
 		},
 	}
-	
+
 	m.table.SetColumns(columns)
 }
 
@@ -150,7 +150,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetHeight(msg.Height - 10)
 		m.table.SetWidth(msg.Width - 6)
 		m.SetTableHeaders()
-				
+
 		m.viewport.Height = msg.Height - 10
 		m.viewport.Width = msg.Width - 6
 
@@ -169,19 +169,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyEnter:
-				if m.state == WaitingForInput {
-					go func() {
-						question := m.textarea.Value()
-						m.textarea.SetValue("")
-						resp := Search(question, "", "", "", "") //TODO: Add the other params here
+			if m.state == WaitingForInput {
+				go func() {
+					question := m.textarea.Value()
+					m.textarea.SetValue("")
+					resp := Search(question, "", "", "", "") //TODO: Add the other params here
 
-						tui.Send(resp)
-					}()
-					m.state = WaitingForResponse
-					return m, tea.Batch(tiCmd, taCmd, vpCmd, spinner.Tick)
-				}
+					tui.Send(resp)
+				}()
+				m.state = WaitingForResponse
+				return m, tea.Batch(tiCmd, taCmd, vpCmd, spinner.Tick)
+			}
 		}
-	
+
 	case SEResponse:
 		if len(msg.Items) == 0 {
 			m.state = WaitingForInput
@@ -196,7 +196,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.textarea.Blur()
 		m.table.Focus()
 
-		return m, nil 
+		return m, nil
 
 	case logMsg:
 		if msg.Msg == "" {
@@ -216,7 +216,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}()
 
 		return m, nil
-	
 
 	case errMsg:
 		m.err = msg
