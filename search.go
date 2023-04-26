@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 
 	googlesearch "github.com/rocketlaunchr/google-search"
@@ -35,14 +36,16 @@ func Search(query string, site string, sort string, order string, filter string)
 		order = "desc"
 	}
 	if filter == "" {
-		filter = "!szz.51ErE5dRYIAadZEuxVMHA5r6Nj7"
+		filter = "!m()D0hHD1-.c61_vXxpH8BorZ9taft2)4vH6)J2QabmX)URKjC*VS(z2"
 	}
 
-	MakeRequest(RequestOptions{
+	res := MakeRequest(RequestOptions{
 		IDs:    ids,
 		Sort:   sort,
 		Order:  order,
 		Site:   site,
 		Filter: filter,
 	})
+
+	fmt.Println(res.Items[0].Answers[0].BodyMarkdown)
 }

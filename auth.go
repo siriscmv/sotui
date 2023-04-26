@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	baseAuthURL = "https://stackoverflow.com/oauth/dialog"
-	clientId    = "26062"
-	key         = "w1BFZmzoMKahE3t5WYlEBA(("
-	scope       = "no_expiry"
-	redirectUri = "http://localhost:6789/sotui-callback"
+	baseAuthURL  = "https://stackoverflow.com/oauth/dialog"
+	authClientId = "26062"
+	authKey      = "w1BFZmzoMKahE3t5WYlEBA(("
+	scope        = "no_expiry"
+	redirectUri  = "http://localhost:6789/sotui-callback"
 )
 
 var token string
@@ -97,5 +97,5 @@ func Oauth2() {
 }
 
 func GetAuthURL() string {
-	return fmt.Sprintf("%s?client_id=%s&scope=%s&redirect_uri=%s", baseAuthURL, clientId, scope, redirectUri)
+	return fmt.Sprintf("%s?client_id=%s&scope=%s&redirect_uri=%s", baseAuthURL, authClientId, scope, redirectUri)
 }
