@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -193,14 +194,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				question := fmt.Sprintf("## %s\n\n%s", row.Title, row.BodyMarkdown)
-
 				answers := "----------------\n\n## Answers\n\n"
 
-				for _, answer := range row.Answers { //TODO: Filter answers that belong to chosen question id (?)
+				for _, answer := range row.Answers { //TODO: Beautify this
 					answers += fmt.Sprintf("### %d\n\n%s\n\n", answer.AnswerID, answer.BodyMarkdown)
 				}
 
-				m.viewport.SetContent(question + answers)
+				output, _ := glamour.Render(question+answers, "auto")
+				m.viewport.SetContent(output)
+
 				return m, nil
 			}
 		}
