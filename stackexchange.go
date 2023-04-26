@@ -8,13 +8,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/charmbracelet/bubbles/table"
 )
 
 const (
 	baseApiURL = "https://api.stackexchange.com/2.3"
 )
 
-var client = &http.Client{
+var httpClient = &http.Client{
 	Timeout: 30 * time.Second,
 	Transport: &http.Transport{
 		MaxIdleConns:       10,
@@ -55,6 +57,21 @@ type SEResponse struct {
 	QuotaRemaining int  `json:"quota_remaining"`
 }
 
+func (resp SEResponse) ToRows() []table.Row {
+	rows := []table.Row{}
+
+	for _, item := range resp.Items {
+		rows = append(rows, table.Row{
+			fmt.Sprintf("%d", item.Score),
+			item.Title,
+			fmt.Sprintf("%d", item.ViewCount),
+			fmt.Sprintf("%d", item.LastEditDate),
+		})
+	}
+
+	return rows
+}
+
 type RequestOptions struct {
 	IDs    string
 	Sort   string
@@ -75,7 +92,7 @@ func MakeRequest(opts RequestOptions) SEResponse {
 	req.Header.Set("User-Agent", "sotui")
 	req.Header.Set("Connection", "keep-alive")
 
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		panic(err)
 	}
