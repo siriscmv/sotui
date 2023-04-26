@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -64,6 +66,7 @@ var (
 			Background(lipgloss.Color("#ed879680"))
 	AccentStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#c6a0f6"))
 	FadedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#999999"))
+	BorderStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#c6a0f6")).Padding(1).Margin(1)
 )
 
 func initialModel() Model {
@@ -91,6 +94,10 @@ func initialModel() Model {
 	tb := table.New()
 	tb.SetHeight(10)
 	tb.SetWidth(30)
+	tb.SetStyles(table.Styles{
+		Header:   lipgloss.NewStyle().Background(lipgloss.Color("#c6a0f6")).Foreground(lipgloss.Color("#000000")),
+		Selected: AccentStyle,
+	})
 
 	m := Model{
 		table:    tb,
@@ -110,19 +117,19 @@ func initialModel() Model {
 func (m *Model) SetTableHeaders() {
 	columns := []table.Column{
 		{
-			Title: "Score",
+			Title: "ID",
 			Width: int(0.1 * float32(m.table.Width())),
 		},
 		{
 			Title: "Title",
-			Width: int(0.6 * float32(m.table.Width())),
+			Width: int(0.7 * float32(m.table.Width())),
 		},
 		{
-			Title: "Views",
+			Title: "Score",
 			Width: int(0.1 * float32(m.table.Width())),
 		},
 		{
-			Title: "Last Activity",
+			Title: "Views",
 			Width: int(0.2 * float32(m.table.Width())),
 		},
 	}
@@ -149,14 +156,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.table.SetHeight(msg.Height - 4)
-		m.table.SetWidth(msg.Width - 6)
+		m.table.SetHeight(msg.Height - 2)
+		m.table.SetWidth(msg.Width - 4)
 		m.SetTableHeaders()
 
-		m.viewport.Height = msg.Height - 4
-		m.viewport.Width = msg.Width - 6
+		m.viewport.Height = msg.Height - 2
+		m.viewport.Width = msg.Width - 4
 
-		m.textarea.SetWidth(msg.Width - 6)
+		m.textarea.SetWidth(msg.Width - 4)
 
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -171,12 +178,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyBackspace:
-			//TODO: Keep going back state by state
+			if m.state == DisplayingHelpScreen {
+				m.state = WaitingForInput //TODO: Track the previous state and go back to that ?
+				return m, nil
+			} else if m.state == DisplayingAllComments {
+				m.state = DisplayingQuestionAndAnswers
+				return m, nil
+			}
+			if m.state == DisplayingQuestionAndAnswers {
+				m.state = DisplayingAllQuestions
+				m.table.Focus()
+				return m, nil
+			} else if m.state == DisplayingAllQuestions {
+				m.state = WaitingForInput
+				m.textarea.Focus()
+				return m, nil
+			}
 		case tea.KeyEnter:
 			if m.state == WaitingForInput {
 				go func() {
 					question := m.textarea.Value()
-					m.textarea.SetValue("")
+					m.textarea.Reset()
 					resp := Search(question, "", "", "", "") //TODO: Add the other params here
 
 					tui.Send(resp)
@@ -187,22 +209,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.state = DisplayingQuestionAndAnswers
 				m.table.Blur()
 
-				row, found := GetSelectedRow(m, m.table.SelectedRow())
+				selectedRowId, _ := strconv.Atoi(m.table.SelectedRow()[0])
+				row := func() ResponseItem {
+					for _, item := range m.response.Items {
+						if item.QuestionID == selectedRowId {
+							return item
+						}
+					}
+					return ResponseItem{}
+				}()
 
-				if !found {
-					return m, nil
+				hr := lipgloss.NewStyle().Foreground(lipgloss.Color("#a6da95")).Render(strings.Repeat("-", m.viewport.Width))
+				question, _ := glamour.Render(fmt.Sprintf("# %s\n\n%s", row.Title, row.BodyMarkdown), "auto")
+				answers, _ := glamour.Render("\n\n\n\n# Answers:\n\n", "auto")
+
+				for _, answer := range row.Answers {
+					rendered, _ := glamour.Render(answer.BodyMarkdown, "auto")
+					answers += BorderStyle.Render(fmt.Sprintf("%s\n\n", rendered))
 				}
 
-				question := fmt.Sprintf("## %s\n\n%s", row.Title, row.BodyMarkdown)
-				answers := "----------------\n\n## Answers\n\n"
-
-				for _, answer := range row.Answers { //TODO: Beautify this
-					answers += fmt.Sprintf("### %d\n\n%s\n\n", answer.AnswerID, answer.BodyMarkdown)
-				}
-
-				output, _ := glamour.Render(question+answers, "auto")
-				m.viewport.SetContent(output)
-
+				m.viewport.SetContent(question + hr + answers)
+				m.viewport.GotoTop()
 				return m, nil
 			}
 		}
@@ -211,7 +238,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(msg.Items) == 0 {
 			m.state = WaitingForInput
 			m.textarea.Blur()
-			m.textarea.SetValue("")
+			m.textarea.Reset()
 			return m, tea.Batch(tiCmd, taCmd, vpCmd, spCmd, getLogCmd("No results found", Warning))
 		}
 
@@ -257,7 +284,7 @@ func (m Model) View() string {
 	} else if m.state == WaitingForInput {
 		return m.textarea.View()
 	} else if m.state == WaitingForResponse {
-		return m.spinner.View()
+		return m.spinner.View() + " Searching..."
 	} else if m.state == DisplayingAllQuestions {
 		return m.table.View()
 	} else if m.state == DisplayingQuestionAndAnswers || m.state == DisplayingAllComments || m.state == DisplayingHelpScreen {

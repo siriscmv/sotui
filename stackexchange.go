@@ -64,10 +64,10 @@ func (resp SEResponse) ToRows() []table.Row {
 
 	for _, item := range resp.Items {
 		rows = append(rows, table.Row{
-			fmt.Sprintf("%d", item.Score),
+			fmt.Sprintf("%d", item.QuestionID),
 			item.Title,
+			fmt.Sprintf("%d", item.Score),
 			fmt.Sprintf("%d", item.ViewCount),
-			fmt.Sprintf("%d", item.LastEditDate),
 		})
 	}
 
